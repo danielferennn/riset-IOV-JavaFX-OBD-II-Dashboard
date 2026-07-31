@@ -1,23 +1,20 @@
-OBD2 Telemetry Dashboard
+# OBD2 Telemetry Dashboard
 
-Aplikasi desktop JavaFX untuk menampilkan data telemetri kendaraan dari adaptor
-OBD-II ELM327 melalui koneksi serial USB atau Bluetooth SPP.
+Aplikasi desktop JavaFX untuk menampilkan data telemetri kendaraan dari adaptor **OBD-II ELM327** melalui koneksi serial USB atau Bluetooth SPP.
 
-Project ini juga memiliki mode simulasi, sehingga tampilan dashboard dan alur
-pembacaan data bisa dicoba tanpa adaptor atau kendaraan.
+Project ini juga memiliki **mode simulasi**, sehingga tampilan dashboard dan alur pembacaan data bisa dicoba tanpa adaptor atau kendaraan.
 
- Fitur Utama
+## Fitur Utama
 
 - Pemilihan port serial dan baud rate.
-- Koneksi ke adaptor ELM327 menggunakan jSerialComm.
+- Koneksi ke adaptor ELM327 menggunakan `jSerialComm`.
 - Inisialisasi adaptor dengan command AT dasar.
 - Pembacaan telemetry OBD-II secara berkala.
 - Mode simulasi untuk testing tanpa perangkat.
-- Dashboard JavaFX dengan telemetry card, progress bar, chart, log komunikasi,
-  dan daftar Diagnostic Trouble Codes (DTC).
+- Dashboard JavaFX dengan telemetry card, progress bar, chart, log komunikasi, dan daftar Diagnostic Trouble Codes (DTC).
 - Unit test untuk parser respons OBD-II.
 
- Data yang Ditampilkan
+## Data yang Ditampilkan
 
 - Engine RPM
 - Vehicle speed
@@ -30,7 +27,7 @@ pembacaan data bisa dicoba tanpa adaptor atau kendaraan.
 - Adapter atau battery voltage
 - Stored DTC melalui Mode 03
 
- Teknologi
+## Teknologi
 
 - Java 21
 - Maven
@@ -38,7 +35,7 @@ pembacaan data bisa dicoba tanpa adaptor atau kendaraan.
 - jSerialComm
 - JUnit 5
 
- Struktur Project
+## Struktur Project
 
 ```text
 .
@@ -62,7 +59,7 @@ pembacaan data bisa dicoba tanpa adaptor atau kendaraan.
         `-- java/com/example/obd2dashboard/parser
 ```
 
- Requirement
+## Requirement
 
 Pastikan Java dan Maven sudah tersedia:
 
@@ -71,13 +68,13 @@ java -version
 mvn -version
 ```
 
-Project ini dikonfigurasi untuk Java 21. Untuk mode koneksi nyata, dibutuhkan:
+Project ini dikonfigurasi untuk **Java 21**. Untuk mode koneksi nyata, dibutuhkan:
 
 - Adaptor OBD-II ELM327.
 - Port serial USB atau Bluetooth SPP.
 - Kendaraan yang mendukung protokol OBD-II.
 
- Menjalankan Aplikasi
+## Menjalankan Aplikasi
 
 Dari root project:
 
@@ -85,16 +82,15 @@ Dari root project:
 mvn clean javafx:run
 ```
 
-Mode ini direkomendasikan untuk development karena JavaFX runtime akan ditangani
-oleh plugin Maven.
+Mode ini direkomendasikan untuk development karena JavaFX runtime akan ditangani oleh plugin Maven.
 
- Menjalankan Test
+## Menjalankan Test
 
 ```bash
 mvn test
 ```
 
- Build JAR
+## Build JAR
 
 ```bash
 mvn clean package
@@ -102,19 +98,18 @@ mvn clean package
 
 Output build akan dibuat di folder `target/`.
 
-Catatan: JAR hasil build belum menjadi paket standalone penuh. Jika ingin
-menjalankan JAR secara manual, JavaFX runtime tetap perlu tersedia di environment.
+> Catatan: JAR hasil build belum menjadi paket standalone penuh. Jika ingin menjalankan JAR secara manual, JavaFX runtime tetap perlu tersedia di environment.
 
- Cara Menggunakan
+## Cara Menggunakan
 
-Untuk mode simulasi:
+### Mode Simulasi
 
 1. Jalankan aplikasi.
 2. Aktifkan tombol `Simulation`.
 3. Dashboard akan memperbarui data telemetry secara otomatis.
 4. Tekan `Disconnect` untuk menghentikan simulasi.
 
-Untuk koneksi ELM327:
+### Koneksi ELM327
 
 1. Hubungkan adaptor ELM327 ke kendaraan.
 2. Nyalakan ignition kendaraan.
@@ -126,7 +121,7 @@ Untuk koneksi ELM327:
 
 Log command dan respons serial akan tampil pada panel communication log.
 
- Command OBD yang Didukung
+## Command OBD yang Didukung
 
 | Command | Data |
 | --- | --- |
@@ -141,13 +136,10 @@ Log command dan respons serial akan tampil pada panel communication log.
 | `ATRV` | Adapter atau battery voltage |
 | `03` | Stored Diagnostic Trouble Codes |
 
-Tidak semua kendaraan mendukung semua PID. Jika kendaraan mengembalikan
-`NO DATA`, aplikasi akan mencatatnya di log tanpa menghentikan polling sensor
-lain.
+Tidak semua kendaraan mendukung semua PID. Jika kendaraan mengembalikan `NO DATA`, aplikasi akan mencatatnya di log tanpa menghentikan polling sensor lain.
 
- Catatan
+## Catatan
 
-Aplikasi ini dibuat untuk monitoring dan pembelajaran. Hasil pembacaan tidak
-ditujukan sebagai pengganti alat diagnosis profesional.
+Aplikasi ini dibuat untuk monitoring dan pembelajaran. Hasil pembacaan tidak ditujukan sebagai pengganti alat diagnosis profesional.
 
 Jangan mengoperasikan aplikasi saat sedang mengemudi.
