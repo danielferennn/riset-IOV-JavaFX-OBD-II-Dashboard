@@ -1,0 +1,239 @@
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 13px;
+}
+
+.app-root,
+.dashboard-scroll,
+.dashboard-scroll > .viewport {
+    -fx-background-color: #11151c;
+}
+
+.header {
+    -fx-background-color: #171c25;
+    -fx-border-color: transparent transparent #2a3240 transparent;
+}
+
+.app-title {
+    -fx-text-fill: #f3f7ff;
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.app-subtitle,
+.last-updated,
+.section-subtitle {
+    -fx-text-fill: #8490a3;
+}
+
+.toolbar {
+    -fx-padding: 10 12;
+    -fx-background-color: #202631;
+    -fx-background-radius: 8;
+}
+
+.field-label {
+    -fx-text-fill: #aeb8c8;
+    -fx-font-weight: bold;
+}
+
+.combo-box,
+.button,
+.toggle-button {
+    -fx-background-color: #303846;
+    -fx-text-fill: #edf3fc;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: #edf3fc;
+    -fx-background-color: #303846;
+}
+
+.button:hover,
+.toggle-button:hover {
+    -fx-background-color: #3b4657;
+}
+
+.button-connect,
+.button-accent {
+    -fx-background-color: #2f86ff;
+    -fx-font-weight: bold;
+}
+
+.button-connect:hover,
+.button-accent:hover {
+    -fx-background-color: #55a0ff;
+}
+
+.simulation-toggle:selected {
+    -fx-background-color: #b78924;
+    -fx-text-fill: white;
+}
+
+.button-small {
+    -fx-font-size: 11px;
+    -fx-padding: 5 10;
+}
+
+.status-pill {
+    -fx-padding: 7 12;
+    -fx-background-radius: 16;
+    -fx-background-color: #2b313c;
+}
+
+.status-dot {
+    -fx-min-width: 9;
+    -fx-min-height: 9;
+    -fx-max-width: 9;
+    -fx-max-height: 9;
+    -fx-background-radius: 50%;
+}
+
+.status-text {
+    -fx-text-fill: #f3f7ff;
+    -fx-font-weight: bold;
+}
+
+.status-connected .status-dot {
+    -fx-background-color: #38d996;
+}
+
+.status-connecting .status-dot,
+.status-simulation .status-dot {
+    -fx-background-color: #f3be4f;
+}
+
+.status-disconnected .status-dot,
+.status-error .status-dot {
+    -fx-background-color: #ff5964;
+}
+
+.telemetry-card,
+.panel {
+    -fx-background-color: #1b212b;
+    -fx-background-radius: 10;
+    -fx-border-color: #29313e;
+    -fx-border-radius: 10;
+    -fx-padding: 15;
+}
+
+.telemetry-card {
+    -fx-pref-width: 220;
+    -fx-pref-height: 112;
+}
+
+.primary-card {
+    -fx-border-color: #315f92;
+    -fx-background-color: #1b2735;
+}
+
+.card-title,
+.section-title {
+    -fx-text-fill: #94a2b7;
+    -fx-font-weight: bold;
+}
+
+.card-value {
+    -fx-text-fill: #f5f9ff;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.card-value-small {
+    -fx-text-fill: #f5f9ff;
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+}
+
+.card-unit {
+    -fx-text-fill: #758399;
+    -fx-font-size: 12px;
+}
+
+.progress-bar {
+    -fx-accent: #2f86ff;
+}
+
+.progress-bar > .track {
+    -fx-background-color: #303846;
+    -fx-background-radius: 5;
+}
+
+.progress-bar > .bar {
+    -fx-background-radius: 5;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane-divider {
+    -fx-background-color: #11151c;
+    -fx-padding: 0 3;
+}
+
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+}
+
+.chart-title,
+.axis-label {
+    -fx-text-fill: #b7c2d3;
+}
+
+.chart-plot-background {
+    -fx-background-color: #151a22;
+}
+
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines {
+    -fx-stroke: #28303d;
+}
+
+.axis {
+    -fx-tick-label-fill: #77859a;
+}
+
+.default-color0.chart-series-line {
+    -fx-stroke: #3b95ff;
+    -fx-stroke-width: 2px;
+}
+
+.communication-log,
+.list-view {
+    -fx-control-inner-background: #12171f;
+    -fx-background-color: #12171f;
+    -fx-text-fill: #c7d3e4;
+    -fx-border-color: #2c3543;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.communication-log {
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 11px;
+}
+
+.list-cell {
+    -fx-background-color: #12171f;
+    -fx-text-fill: #d7e1ef;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: #2f86ff;
+}
+
+.separator .line {
+    -fx-border-color: #3a4351;
+}
+
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: #171c25;
+}

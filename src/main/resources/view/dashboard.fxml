@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.obd2dashboard.controller.DashboardController"
+            stylesheets="@../css/dashboard.css"
+            styleClass="app-root">
+    <top>
+        <VBox spacing="12" styleClass="header">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <VBox spacing="2">
+                    <Label text="OBD2 TELEMETRY" styleClass="app-title"/>
+                    <Label text="Live vehicle diagnostics dashboard" styleClass="app-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox fx:id="statusPill" alignment="CENTER" spacing="8" styleClass="status-pill">
+                    <Region styleClass="status-dot"/>
+                    <Label fx:id="statusLabel" text="Disconnected" styleClass="status-text"/>
+                </HBox>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="9" styleClass="toolbar">
+                <Label text="Port" styleClass="field-label"/>
+                <ComboBox fx:id="portComboBox" prefWidth="125"/>
+                <Button fx:id="refreshPortsButton" text="Refresh Port" onAction="#refreshPorts"/>
+                <Separator orientation="VERTICAL"/>
+                <Label text="Baud" styleClass="field-label"/>
+                <ComboBox fx:id="baudRateComboBox" prefWidth="115"/>
+                <Button fx:id="connectButton" text="Connect" onAction="#connect" styleClass="button-connect"/>
+                <Button fx:id="disconnectButton" text="Disconnect" onAction="#disconnect" disable="true"/>
+                <ToggleButton fx:id="simulationToggle" text="Simulation" onAction="#toggleSimulation"
+                              styleClass="simulation-toggle"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lastUpdatedLabel" text="Belum ada data" styleClass="last-updated"/>
+            </HBox>
+            <padding>
+                <Insets top="16" right="20" bottom="14" left="20"/>
+            </padding>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" pannable="true" styleClass="dashboard-scroll">
+            <VBox spacing="16">
+                <TilePane prefColumns="5" hgap="12" vgap="12" tileAlignment="CENTER_LEFT">
+                    <VBox spacing="8" styleClass="telemetry-card,primary-card">
+                        <Label text="ENGINE RPM" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="rpmValueLabel" text="--" styleClass="card-value"/>
+                            <Label text="rpm" styleClass="card-unit"/>
+                        </HBox>
+                        <ProgressBar fx:id="rpmProgressBar" progress="0" maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox spacing="8" styleClass="telemetry-card,primary-card">
+                        <Label text="VEHICLE SPEED" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="speedValueLabel" text="--" styleClass="card-value"/>
+                            <Label text="km/h" styleClass="card-unit"/>
+                        </HBox>
+                        <ProgressBar fx:id="speedProgressBar" progress="0" maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="COOLANT" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="coolantValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="deg C" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="ENGINE LOAD" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="engineLoadValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="\%" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="THROTTLE" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="throttleValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="\%" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="INTAKE AIR" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="intakeAirValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="deg C" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="FUEL LEVEL" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="fuelValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="\%" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="MANIFOLD PRESSURE" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="manifoldValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="kPa" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="7" styleClass="telemetry-card">
+                        <Label text="VOLTAGE" styleClass="card-title"/>
+                        <HBox alignment="BASELINE_LEFT" spacing="7">
+                            <Label fx:id="voltageValueLabel" text="--" styleClass="card-value-small"/>
+                            <Label text="V" styleClass="card-unit"/>
+                        </HBox>
+                    </VBox>
+                </TilePane>
+
+                <SplitPane dividerPositions="0.66" VBox.vgrow="ALWAYS">
+                    <VBox spacing="12" styleClass="panel">
+                        <Label text="LIVE HISTORY" styleClass="section-title"/>
+                        <GridPane hgap="12" vgap="12" VBox.vgrow="ALWAYS">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints vgrow="ALWAYS"/>
+                            </rowConstraints>
+                            <LineChart fx:id="rpmChart" animated="false" legendVisible="false"
+                                       title="Engine RPM" GridPane.columnIndex="0">
+                                <xAxis>
+                                    <NumberAxis label="Seconds" forceZeroInRange="false"/>
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis label="RPM" lowerBound="0" upperBound="6000"
+                                                tickUnit="1000" autoRanging="false"/>
+                                </yAxis>
+                            </LineChart>
+                            <LineChart fx:id="speedChart" animated="false" legendVisible="false"
+                                       title="Vehicle Speed" GridPane.columnIndex="1">
+                                <xAxis>
+                                    <NumberAxis label="Seconds" forceZeroInRange="false"/>
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis label="km/h" lowerBound="0" upperBound="200"
+                                                tickUnit="40" autoRanging="false"/>
+                                </yAxis>
+                            </LineChart>
+                        </GridPane>
+                    </VBox>
+                    <VBox spacing="10" styleClass="panel">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="COMMUNICATION LOG" styleClass="section-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button text="Clear Log" onAction="#clearLog" styleClass="button-small"/>
+                        </HBox>
+                        <TextArea fx:id="communicationLog" prefRowCount="16" VBox.vgrow="ALWAYS"
+                                  styleClass="communication-log"/>
+                    </VBox>
+                </SplitPane>
+
+                <VBox spacing="10" styleClass="panel">
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="2">
+                            <Label text="DIAGNOSTIC TROUBLE CODES" styleClass="section-title"/>
+                            <Label text="Mode 03 stored trouble codes" styleClass="section-subtitle"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="readDtcButton" text="Read DTC" onAction="#readDtc" disable="true"
+                                styleClass="button-accent"/>
+                    </HBox>
+                    <ListView fx:id="dtcListView" prefHeight="105"/>
+                </VBox>
+                <padding>
+                    <Insets top="16" right="20" bottom="20" left="20"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
