@@ -12,7 +12,7 @@ Project ini juga memiliki **mode simulasi**, sehingga tampilan dashboard dan alu
 - Pembacaan telemetry OBD-II secara berkala.
 - Mode simulasi untuk testing tanpa perangkat.
 - Dashboard JavaFX dengan telemetry card, progress bar, chart, log komunikasi, dan daftar Diagnostic Trouble Codes (DTC).
-- Unit test untuk parser respons OBD-II.
+- Unit test untuk parser respons OBD-II (termasuk Mode 03) dan lifecycle `SimulationService`.
 
 ## Data yang Ditampilkan
 
@@ -56,7 +56,11 @@ Project ini juga memiliki **mode simulasi**, sehingga tampilan dashboard dan alu
     |       |-- css/dashboard.css
     |       `-- view/dashboard.fxml
     `-- test
-        `-- java/com/example/obd2dashboard/parser
+        `-- java/com/example/obd2dashboard
+            |-- parser
+            |   `-- ObdResponseParserTest.java
+            `-- service
+                `-- SimulationServiceTest.java
 ```
 
 ## Requirement
@@ -143,3 +147,17 @@ Tidak semua kendaraan mendukung semua PID. Jika kendaraan mengembalikan `NO DATA
 Aplikasi ini dibuat untuk monitoring dan pembelajaran. Hasil pembacaan tidak ditujukan sebagai pengganti alat diagnosis profesional.
 
 Jangan mengoperasikan aplikasi saat sedang mengemudi.
+
+### Pembacaan DTC (Mode 03)
+
+Respons Mode 03 divalidasi secara struktural, bukan hanya dengan mencari marker `43`:
+
+- Payload kosong (misalnya respons hanya `43`) dianggap **tidak valid** dan memunculkan `ObdParseException`.
+- Payload yang seluruh byte-nya nol (misalnya `43 00` atau `43 00 00`) adalah **respons kosong yang valid** dan ditampilkan sebagai `Tidak ada DTC`.
+- Payload dengan byte bukan nol harus terdiri atas pasangan byte lengkap (jumlah byte genap). Byte tunggal bukan nol atau sisa byte yang tidak berpasangan membuat respons **tidak valid**.
+- Jika ada satu baris bermarker `43` yang terpotong, seluruh respons dianggap gagal — tidak ada hasil parsial yang ditampilkan sebagai sukses.
+
+### Transisi Koneksi dan Simulasi
+
+Setiap producer telemetry (ELM327 maupun simulasi) memakai satu worker thread. Untuk producer/sesi yang aktif, `stop()` menunggu callback telemetry yang sedang berjalan tuntas lebih dulu, lalu memancarkan status `DISCONNECTED` pada barrier dan baru setelah itu menyelesaikan future-nya. Bila simulasi sudah idle atau sudah ditutup, `stop()` tidak memancarkan status apa pun dan langsung mengembalikan future yang sudah selesai (no-op). Kontrak ini memungkinkan controller menunggu `stop()` sebelum mengaktifkan mode berikutnya. Setelah service ditutup (`close()`), service tidak dapat dijalankan kembali.
+
