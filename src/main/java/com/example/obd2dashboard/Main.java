@@ -15,10 +15,10 @@ public final class Main extends Application {
         Scene scene = new Scene(loader.load(), 1280, 820);
         DashboardController controller = loader.getController();
 
-        stage.setTitle("OBD2 Telemetry Dashboard");
         stage.setMinWidth(1050);
         stage.setMinHeight(720);
         stage.setScene(scene);
+        controller.setStage(stage);
         stage.setOnCloseRequest(event -> controller.shutdown());
         stage.show();
     }

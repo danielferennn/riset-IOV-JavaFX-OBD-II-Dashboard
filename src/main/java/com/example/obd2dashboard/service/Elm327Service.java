@@ -6,6 +6,7 @@ import com.example.obd2dashboard.exception.ObdParseException;
 import com.example.obd2dashboard.model.ConnectionStatus;
 import com.example.obd2dashboard.model.ObdPid;
 import com.example.obd2dashboard.parser.ObdResponseParser;
+import com.example.obd2dashboard.util.Localization;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -53,14 +54,14 @@ public final class Elm327Service implements ObdService {
         synchronized (lifecycleLock) {
             if (state != State.IDLE) {
                 return CompletableFuture.failedFuture(
-                        new IllegalStateException("Koneksi ELM327 sudah aktif"));
+                        new IllegalStateException(Localization.text("elmerror.alreadyActive")));
             }
 
             state = State.CONNECTING;
             long session = ++sessionId;
             CompletableFuture<Void> result = new CompletableFuture<>();
             try {
-                listener.onStatus(ConnectionStatus.CONNECTING, "Membuka " + portName);
+                listener.onStatus(ConnectionStatus.CONNECTING, Localization.text("status.connecting", portName));
                 commandExecutor.execute(() -> connectWorker(portName, baudRate, session, result));
             } catch (RuntimeException exception) {
                 state = State.IDLE;
@@ -75,14 +76,14 @@ public final class Elm327Service implements ObdService {
             ensureConnecting(session);
             serialPortService.openPort(portName, baudRate);
             ensureConnecting(session);
-            listener.onLog("INFO", "Port " + portName + " dibuka pada " + baudRate + " baud");
+            listener.onLog("INFO", Localization.text("log.portOpened", portName, baudRate));
             initializeElm327(session);
 
             synchronized (lifecycleLock) {
                 ensureConnectingLocked(session);
                 schedulePolling(session);
                 state = State.RUNNING;
-                listener.onStatus(ConnectionStatus.CONNECTED, "Connected - " + portName);
+                listener.onStatus(ConnectionStatus.CONNECTED, Localization.text("status.connected", portName));
             }
             result.complete(null);
         } catch (Exception exception) {
@@ -103,7 +104,7 @@ public final class Elm327Service implements ObdService {
                 }
             }
             if (invalidated) {
-                result.completeExceptionally(new CancellationException("Koneksi ELM327 dibatalkan"));
+                result.completeExceptionally(new CancellationException(Localization.text("elmerror.connectCancelled")));
             } else {
                 result.completeExceptionally(exception);
             }
@@ -161,13 +162,14 @@ public final class Elm327Service implements ObdService {
             }
         } catch (ObdParseException exception) {
             if (isRunningSession(session)) {
-                listener.onLog("WARN", pid.getDisplayName() + " tidak tersedia: " + exception.getMessage());
+                listener.onLog("WARN", Localization.text("log.pidUnavailable",
+                        Localization.text(pid.displayKey()), exception.getMessage()));
             }
         } catch (ObdConnectionException exception) {
             handleConnectionLoss(exception, session);
         } catch (RuntimeException exception) {
             if (isRunningSession(session)) {
-                listener.onLog("ERROR", "Kesalahan polling " + pid.getCommand() + ": " + exception.getMessage());
+                listener.onLog("ERROR", Localization.text("log.pollingError", pid.getCommand(), exception.getMessage()));
             }
         }
     }
@@ -184,7 +186,7 @@ public final class Elm327Service implements ObdService {
         synchronized (lifecycleLock) {
             if (state != State.RUNNING) {
                 return CompletableFuture.failedFuture(
-                        new IllegalStateException("Hubungkan ELM327 sebelum membaca DTC"));
+                        new IllegalStateException(Localization.text("elmerror.dtcBeforeConnect")));
             }
 
             long session = sessionId;
@@ -245,18 +247,18 @@ public final class Elm327Service implements ObdService {
 
         synchronized (lifecycleLock) {
             if (state == State.CLOSED) {
-                result.completeExceptionally(new CancellationException("Service ELM327 sudah ditutup"));
+                result.completeExceptionally(new CancellationException(Localization.text("elmerror.serviceClosed")));
                 return;
             }
             if (state != State.STOPPING || stopFuture != result) {
-                result.completeExceptionally(new CancellationException("Sesi ELM327 telah berakhir"));
+                result.completeExceptionally(new CancellationException(Localization.text("elmerror.stopSessionEnded")));
                 return;
             }
 
             state = State.IDLE;
             if (failure == null) {
-                listener.onLog("INFO", "Port serial ditutup");
-                listener.onStatus(ConnectionStatus.DISCONNECTED, "Disconnected");
+                listener.onLog("INFO", Localization.text("log.serialClosed"));
+                listener.onStatus(ConnectionStatus.DISCONNECTED, Localization.text("status.disconnected"));
                 result.complete(null);
             } else {
                 listener.onStatus(ConnectionStatus.ERROR, friendlyMessage(failure));
@@ -286,7 +288,7 @@ public final class Elm327Service implements ObdService {
             if (state == State.RUNNING && sessionId == cleanupSession) {
                 state = State.IDLE;
                 listener.onLog("ERROR", friendlyMessage(exception));
-                listener.onStatus(ConnectionStatus.ERROR, "Koneksi terputus");
+                listener.onStatus(ConnectionStatus.ERROR, Localization.text("status.connectionLost"));
             }
         }
     }
@@ -306,14 +308,14 @@ public final class Elm327Service implements ObdService {
 
     private void ensureConnectingLocked(long session) {
         if (state != State.CONNECTING || sessionId != session) {
-            throw new CancellationException("Koneksi ELM327 dibatalkan");
+            throw new CancellationException(Localization.text("elmerror.connectCancelled"));
         }
     }
 
     private void ensureRunningSession(long session) {
         synchronized (lifecycleLock) {
             if (state != State.RUNNING || sessionId != session) {
-                throw new CancellationException("Sesi OBD telah berakhir");
+                throw new CancellationException(Localization.text("elmerror.sessionEnded"));
             }
         }
     }
@@ -355,7 +357,8 @@ public final class Elm327Service implements ObdService {
 
     private String friendlyMessage(Exception exception) {
         String message = exception.getMessage();
-        return message == null || message.isBlank() ? "Gagal terhubung ke ELM327" : message;
+        return message == null || message.isBlank()
+                ? Localization.text("elmerror.connectFailed") : message;
     }
 
     private record InitCommand(String command, Duration timeout, Duration pauseAfter) {

@@ -3,6 +3,7 @@ package com.example.obd2dashboard.parser;
 import com.example.obd2dashboard.exception.ObdParseException;
 import com.example.obd2dashboard.model.ObdPid;
 import com.example.obd2dashboard.util.HexUtils;
+import com.example.obd2dashboard.util.Localization;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -31,7 +32,7 @@ public final class ObdResponseParser {
             case COOLANT_TEMPERATURE, INTAKE_AIR_TEMPERATURE -> singleByte(pid, bytes) - 40.0;
             case ENGINE_LOAD, THROTTLE_POSITION, FUEL_LEVEL -> singleByte(pid, bytes) * 100.0 / 255.0;
             case MANIFOLD_PRESSURE -> singleByte(pid, bytes);
-            case VOLTAGE -> throw new IllegalStateException("Voltage ditangani sebelum switch");
+            case VOLTAGE -> throw new IllegalStateException(Localization.text("parser.voltageOrder"));
         };
     }
 
@@ -39,7 +40,7 @@ public final class ObdResponseParser {
         String cleaned = validateAndClean(rawResponse, "ATRV");
         Matcher matcher = VOLTAGE_PATTERN.matcher(cleaned);
         if (!matcher.find()) {
-            throw new ObdParseException("Respons voltage tidak valid: " + summarize(rawResponse));
+            throw new ObdParseException(Localization.text("parser.voltageInvalid", summarize(rawResponse)));
         }
         return Double.parseDouble(matcher.group(1));
     }
@@ -58,14 +59,14 @@ public final class ObdResponseParser {
             String payload = compact.substring(marker + 2);
             List<String> bytes = splitBytes(payload);
             if (bytes.isEmpty()) {
-                throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
+                throw new ObdParseException(Localization.text("parser.mode03Invalid", summarize(rawResponse)));
             }
             if (isAllZero(bytes)) {
                 sawValidResponse = true;
                 continue;
             }
             if (bytes.size() < 2 || bytes.size() % 2 != 0) {
-                throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
+                throw new ObdParseException(Localization.text("parser.mode03Invalid", summarize(rawResponse)));
             }
             sawValidResponse = true;
             for (int index = 0; index + 1 < bytes.size(); index += 2) {
@@ -79,7 +80,7 @@ public final class ObdResponseParser {
         }
 
         if (!sawValidResponse) {
-            throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
+            throw new ObdParseException(Localization.text("parser.mode03Invalid", summarize(rawResponse)));
         }
         return List.copyOf(result);
     }
@@ -95,18 +96,18 @@ public final class ObdResponseParser {
                 return compact.substring(markerIndex + marker.length());
             }
         }
-        throw new ObdParseException("Respons tidak memuat " + marker + ": " + summarize(rawResponse));
+        throw new ObdParseException(Localization.text("parser.markerMissing", marker, summarize(rawResponse)));
     }
 
     private String validateAndClean(String rawResponse, String echoedCommand) throws ObdParseException {
         if (rawResponse == null || rawResponse.isBlank()) {
-            throw new ObdParseException("Respons OBD kosong");
+            throw new ObdParseException(Localization.text("parser.emptyResponse"));
         }
 
         String upper = rawResponse.toUpperCase(Locale.ROOT);
         for (String error : List.of("NO DATA", "STOPPED", "UNABLE TO CONNECT", "ERROR", "?")) {
             if (upper.contains(error)) {
-                throw new ObdParseException("ELM327 melaporkan: " + error);
+                throw new ObdParseException(Localization.text("parser.elmReported", error));
             }
         }
 
@@ -122,7 +123,7 @@ public final class ObdResponseParser {
             retainedLines.add(trimmed);
         }
         if (retainedLines.isEmpty()) {
-            throw new ObdParseException("Respons tidak memiliki payload data");
+            throw new ObdParseException(Localization.text("parser.noPayload"));
         }
         return String.join(System.lineSeparator(), retainedLines);
     }
@@ -130,7 +131,7 @@ public final class ObdResponseParser {
     private List<String> splitBytes(String compactPayload) throws ObdParseException {
         String compact = compactPayload.replaceAll("(?i)[^0-9A-F]", "").toUpperCase(Locale.ROOT);
         if (compact.length() % 2 != 0) {
-            throw new ObdParseException("Jumlah digit hexadecimal ganjil");
+            throw new ObdParseException(Localization.text("parser.oddHex"));
         }
         List<String> bytes = new ArrayList<>();
         for (int index = 0; index < compact.length(); index += 2) {
@@ -155,7 +156,7 @@ public final class ObdResponseParser {
 
     private void requireBytes(ObdPid pid, List<String> bytes, int count) throws ObdParseException {
         if (bytes.size() < count) {
-            throw new ObdParseException("Respons " + pid.getCommand() + " terlalu pendek");
+            throw new ObdParseException(Localization.text("parser.responseTooShort", pid.getCommand()));
         }
     }
 

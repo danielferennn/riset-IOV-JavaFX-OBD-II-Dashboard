@@ -58,6 +58,20 @@
     -fx-background-color: #3b4657;
 }
 
+/* Visible keyboard focus for every interactive control. */
+.combo-box:focused,
+.button:focused,
+.toggle-button:focused {
+    -fx-border-color: #6db2ff;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-border-insets: -2;
+}
+
+.combo-box:focused {
+    -fx-background-color: #3b4657;
+}
+
 .button-connect,
 .button-accent {
     -fx-background-color: #2f86ff;
@@ -122,7 +136,9 @@
 }
 
 .telemetry-card {
-    -fx-pref-width: 220;
+    -fx-min-width: 170;
+    -fx-pref-width: 205;
+    -fx-max-width: 320;
     -fx-pref-height: 112;
 }
 
@@ -220,6 +236,10 @@
     -fx-font-size: 11px;
 }
 
+.communication-log:focused {
+    -fx-border-color: #6db2ff;
+}
+
 .list-cell {
     -fx-background-color: #12171f;
     -fx-text-fill: #d7e1ef;
@@ -227,6 +247,15 @@
 
 .list-cell:filled:selected {
     -fx-background-color: #2f86ff;
+}
+
+.list-view:focused {
+    -fx-border-color: #6db2ff;
+}
+
+.dtc-empty {
+    -fx-text-fill: #8490a3;
+    -fx-padding: 6 8;
 }
 
 .separator .line {

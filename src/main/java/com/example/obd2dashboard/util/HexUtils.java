@@ -8,7 +8,7 @@ public final class HexUtils {
 
     public static int parseByte(String value) throws ObdParseException {
         if (value == null || !value.matches("(?i)[0-9a-f]{2}")) {
-            throw new ObdParseException("Byte hexadecimal tidak valid: " + value);
+            throw new ObdParseException(Localization.text("hex.invalidByte", value));
         }
         return Integer.parseInt(value, 16);
     }

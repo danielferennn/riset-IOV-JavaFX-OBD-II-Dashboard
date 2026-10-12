@@ -2,6 +2,7 @@ package com.example.obd2dashboard.service;
 
 import com.example.obd2dashboard.model.ConnectionStatus;
 import com.example.obd2dashboard.model.ObdPid;
+import com.example.obd2dashboard.util.Localization;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -35,16 +36,16 @@ public final class SimulationService implements ObdService {
     public void start() {
         synchronized (lifecycleLock) {
             if (closed) {
-                throw new IllegalStateException("Service simulasi sudah ditutup");
+                throw new IllegalStateException(Localization.text("sim.error.closed"));
             }
             if (stopFuture != null && !stopFuture.isDone()) {
-                throw new IllegalStateException("Simulasi sedang dihentikan");
+                throw new IllegalStateException(Localization.text("sim.error.stopping"));
             }
             if (!running.compareAndSet(false, true)) {
                 return;
             }
-            listener.onLog("INFO", "Mode simulasi diaktifkan");
-            listener.onStatus(ConnectionStatus.SIMULATION, "Simulation");
+            listener.onLog("INFO", Localization.text("log.simulationEnabled"));
+            listener.onStatus(ConnectionStatus.SIMULATION, Localization.text("status.simulation"));
             updateTask = scheduler.scheduleAtFixedRate(this::generateFrame, 0, 500, TimeUnit.MILLISECONDS);
         }
     }
@@ -101,11 +102,11 @@ public final class SimulationService implements ObdService {
                 synchronized (lifecycleLock) {
                     if (closed) {
                         barrier.completeExceptionally(
-                                new CancellationException("Service simulasi sudah ditutup"));
+                                new CancellationException(Localization.text("sim.error.closed")));
                         return;
                     }
-                    listener.onLog("INFO", "Mode simulasi dihentikan");
-                    listener.onStatus(ConnectionStatus.DISCONNECTED, "Disconnected");
+                    listener.onLog("INFO", Localization.text("log.simulationDisabled"));
+                    listener.onStatus(ConnectionStatus.DISCONNECTED, Localization.text("status.disconnected"));
                 }
                 barrier.complete(null);
             });

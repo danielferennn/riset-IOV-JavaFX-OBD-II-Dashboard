@@ -1,6 +1,7 @@
 package com.example.obd2dashboard.service;
 
 import com.example.obd2dashboard.exception.ObdConnectionException;
+import com.example.obd2dashboard.util.Localization;
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.io.ByteArrayOutputStream;
@@ -24,10 +25,10 @@ public final class SerialPortService implements AutoCloseable {
     public void openPort(String portName, int baudRate) throws ObdConnectionException {
         synchronized (commandLock) {
             if (isOpen()) {
-                throw new ObdConnectionException("Port serial sudah terbuka");
+                throw new ObdConnectionException(Localization.text("serial.portOpen"));
             }
             if (portName == null || portName.isBlank()) {
-                throw new ObdConnectionException("Nama port serial belum dipilih");
+                throw new ObdConnectionException(Localization.text("serial.portNotSelected"));
             }
 
             SerialPort candidate = SerialPort.getCommPort(portName);
@@ -35,7 +36,7 @@ public final class SerialPortService implements AutoCloseable {
             candidate.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
             if (!candidate.openPort()) {
                 throw new ObdConnectionException(
-                        "Gagal membuka " + portName + ". Port mungkin sedang digunakan aplikasi lain.");
+                        Localization.text("serial.openFailed", portName));
             }
             serialPort = candidate;
         }
@@ -64,7 +65,7 @@ public final class SerialPortService implements AutoCloseable {
             byte[] payload = (command.trim() + "\r").getBytes(StandardCharsets.US_ASCII);
             int written = current.writeBytes(payload, payload.length);
             if (written != payload.length) {
-                throw new ObdConnectionException("Gagal menulis command " + command + " ke port serial");
+                throw new ObdConnectionException(Localization.text("serial.writeFailed", command));
             }
             return readUntilPrompt(timeout);
         }
@@ -78,12 +79,12 @@ public final class SerialPortService implements AutoCloseable {
 
         while (System.nanoTime() < deadline) {
             if (!current.isOpen()) {
-                throw new ObdConnectionException("Koneksi serial terputus");
+                throw new ObdConnectionException(Localization.text("serial.disconnected"));
             }
 
             int available = current.bytesAvailable();
             if (available < 0) {
-                throw new ObdConnectionException("Gagal membaca status port serial");
+                throw new ObdConnectionException(Localization.text("serial.statusReadFailed"));
             }
             if (available == 0) {
                 LockSupport.parkNanos(Duration.ofMillis(10).toNanos());
@@ -92,7 +93,7 @@ public final class SerialPortService implements AutoCloseable {
 
             int read = current.readBytes(buffer, Math.min(buffer.length, available));
             if (read < 0) {
-                throw new ObdConnectionException("Terjadi kesalahan saat membaca port serial");
+                throw new ObdConnectionException(Localization.text("serial.readError"));
             }
             response.write(buffer, 0, read);
             boolean promptFound = false;
@@ -106,13 +107,13 @@ public final class SerialPortService implements AutoCloseable {
                 return response.toString(StandardCharsets.US_ASCII);
             }
         }
-        throw new ObdConnectionException("Timeout menunggu prompt ELM327");
+        throw new ObdConnectionException(Localization.text("serial.promptTimeout"));
     }
 
     private SerialPort requireOpenPort() throws ObdConnectionException {
         SerialPort current = serialPort;
         if (current == null || !current.isOpen()) {
-            throw new ObdConnectionException("Port serial belum terhubung");
+            throw new ObdConnectionException(Localization.text("serial.notConnected"));
         }
         return current;
     }

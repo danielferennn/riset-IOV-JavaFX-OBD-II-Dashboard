@@ -15,12 +15,12 @@
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -32,25 +32,30 @@
         <VBox spacing="12" styleClass="header">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <VBox spacing="2">
-                    <Label text="OBD2 TELEMETRY" styleClass="app-title"/>
-                    <Label text="Live vehicle diagnostics dashboard" styleClass="app-subtitle"/>
+                    <Label fx:id="appTitleLabel" text="OBD2 TELEMETRY" styleClass="app-title"/>
+                    <Label fx:id="appSubtitleLabel" text="Live vehicle diagnostics dashboard"
+                           styleClass="app-subtitle"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
+                <HBox alignment="CENTER" spacing="6" styleClass="language-selector">
+                    <Label fx:id="languageLabel" text="Bahasa" styleClass="field-label"/>
+                    <ComboBox fx:id="languageComboBox" prefWidth="150"/>
+                </HBox>
                 <HBox fx:id="statusPill" alignment="CENTER" spacing="8" styleClass="status-pill">
                     <Region styleClass="status-dot"/>
-                    <Label fx:id="statusLabel" text="Disconnected" styleClass="status-text"/>
+                    <Label fx:id="statusLabel" text="Terputus" styleClass="status-text"/>
                 </HBox>
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="9" styleClass="toolbar">
-                <Label text="Port" styleClass="field-label"/>
+                <Label fx:id="portFieldLabel" text="Port" styleClass="field-label"/>
                 <ComboBox fx:id="portComboBox" prefWidth="125"/>
-                <Button fx:id="refreshPortsButton" text="Refresh Port" onAction="#refreshPorts"/>
+                <Button fx:id="refreshPortsButton" text="Segarkan Port" onAction="#refreshPorts"/>
                 <Separator orientation="VERTICAL"/>
-                <Label text="Baud" styleClass="field-label"/>
+                <Label fx:id="baudFieldLabel" text="Baud" styleClass="field-label"/>
                 <ComboBox fx:id="baudRateComboBox" prefWidth="115"/>
-                <Button fx:id="connectButton" text="Connect" onAction="#connect" styleClass="button-connect"/>
-                <Button fx:id="disconnectButton" text="Disconnect" onAction="#disconnect" disable="true"/>
-                <ToggleButton fx:id="simulationToggle" text="Simulation" onAction="#toggleSimulation"
+                <Button fx:id="connectButton" text="Hubungkan" onAction="#connect" styleClass="button-connect"/>
+                <Button fx:id="disconnectButton" text="Putuskan" onAction="#disconnect" disable="true"/>
+                <ToggleButton fx:id="simulationToggle" text="Simulasi" onAction="#toggleSimulation"
                               styleClass="simulation-toggle"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label fx:id="lastUpdatedLabel" text="Belum ada data" styleClass="last-updated"/>
@@ -64,9 +69,9 @@
     <center>
         <ScrollPane fitToWidth="true" pannable="true" styleClass="dashboard-scroll">
             <VBox spacing="16">
-                <TilePane prefColumns="5" hgap="12" vgap="12" tileAlignment="CENTER_LEFT">
+                <FlowPane hgap="12" vgap="12" alignment="TOP_LEFT" prefWrapLength="1080">
                     <VBox spacing="8" styleClass="telemetry-card,primary-card">
-                        <Label text="ENGINE RPM" styleClass="card-title"/>
+                        <Label fx:id="rpmCardTitle" text="ENGINE RPM" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="rpmValueLabel" text="--" styleClass="card-value"/>
                             <Label text="rpm" styleClass="card-unit"/>
@@ -74,7 +79,7 @@
                         <ProgressBar fx:id="rpmProgressBar" progress="0" maxWidth="Infinity"/>
                     </VBox>
                     <VBox spacing="8" styleClass="telemetry-card,primary-card">
-                        <Label text="VEHICLE SPEED" styleClass="card-title"/>
+                        <Label fx:id="speedCardTitle" text="VEHICLE SPEED" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="speedValueLabel" text="--" styleClass="card-value"/>
                             <Label text="km/h" styleClass="card-unit"/>
@@ -82,59 +87,59 @@
                         <ProgressBar fx:id="speedProgressBar" progress="0" maxWidth="Infinity"/>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="COOLANT" styleClass="card-title"/>
+                        <Label fx:id="coolantCardTitle" text="COOLANT" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="coolantValueLabel" text="--" styleClass="card-value-small"/>
-                            <Label text="deg C" styleClass="card-unit"/>
+                            <Label text="°C" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="ENGINE LOAD" styleClass="card-title"/>
+                        <Label fx:id="engineLoadCardTitle" text="ENGINE LOAD" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="engineLoadValueLabel" text="--" styleClass="card-value-small"/>
                             <Label text="\%" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="THROTTLE" styleClass="card-title"/>
+                        <Label fx:id="throttleCardTitle" text="THROTTLE" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="throttleValueLabel" text="--" styleClass="card-value-small"/>
                             <Label text="\%" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="INTAKE AIR" styleClass="card-title"/>
+                        <Label fx:id="intakeAirCardTitle" text="INTAKE AIR" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="intakeAirValueLabel" text="--" styleClass="card-value-small"/>
-                            <Label text="deg C" styleClass="card-unit"/>
+                            <Label text="°C" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="FUEL LEVEL" styleClass="card-title"/>
+                        <Label fx:id="fuelCardTitle" text="FUEL LEVEL" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="fuelValueLabel" text="--" styleClass="card-value-small"/>
                             <Label text="\%" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="MANIFOLD PRESSURE" styleClass="card-title"/>
+                        <Label fx:id="manifoldCardTitle" text="MANIFOLD PRESSURE" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="manifoldValueLabel" text="--" styleClass="card-value-small"/>
                             <Label text="kPa" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
                     <VBox spacing="7" styleClass="telemetry-card">
-                        <Label text="VOLTAGE" styleClass="card-title"/>
+                        <Label fx:id="voltageCardTitle" text="VOLTAGE" styleClass="card-title"/>
                         <HBox alignment="BASELINE_LEFT" spacing="7">
                             <Label fx:id="voltageValueLabel" text="--" styleClass="card-value-small"/>
                             <Label text="V" styleClass="card-unit"/>
                         </HBox>
                     </VBox>
-                </TilePane>
+                </FlowPane>
 
                 <SplitPane dividerPositions="0.66" VBox.vgrow="ALWAYS">
                     <VBox spacing="12" styleClass="panel">
-                        <Label text="LIVE HISTORY" styleClass="section-title"/>
+                        <Label fx:id="historySectionTitle" text="LIVE HISTORY" styleClass="section-title"/>
                         <GridPane hgap="12" vgap="12" VBox.vgrow="ALWAYS">
                             <columnConstraints>
                                 <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
@@ -146,20 +151,20 @@
                             <LineChart fx:id="rpmChart" animated="false" legendVisible="false"
                                        title="Engine RPM" GridPane.columnIndex="0">
                                 <xAxis>
-                                    <NumberAxis label="Seconds" forceZeroInRange="false"/>
+                                    <NumberAxis fx:id="rpmXAxis" label="Seconds" forceZeroInRange="false"/>
                                 </xAxis>
                                 <yAxis>
-                                    <NumberAxis label="RPM" lowerBound="0" upperBound="6000"
+                                    <NumberAxis fx:id="rpmYAxis" label="RPM" lowerBound="0" upperBound="6000"
                                                 tickUnit="1000" autoRanging="false"/>
                                 </yAxis>
                             </LineChart>
                             <LineChart fx:id="speedChart" animated="false" legendVisible="false"
                                        title="Vehicle Speed" GridPane.columnIndex="1">
                                 <xAxis>
-                                    <NumberAxis label="Seconds" forceZeroInRange="false"/>
+                                    <NumberAxis fx:id="speedXAxis" label="Seconds" forceZeroInRange="false"/>
                                 </xAxis>
                                 <yAxis>
-                                    <NumberAxis label="km/h" lowerBound="0" upperBound="200"
+                                    <NumberAxis fx:id="speedYAxis" label="km/h" lowerBound="0" upperBound="200"
                                                 tickUnit="40" autoRanging="false"/>
                                 </yAxis>
                             </LineChart>
@@ -167,9 +172,10 @@
                     </VBox>
                     <VBox spacing="10" styleClass="panel">
                         <HBox alignment="CENTER_LEFT">
-                            <Label text="COMMUNICATION LOG" styleClass="section-title"/>
+                            <Label fx:id="logSectionTitle" text="COMMUNICATION LOG" styleClass="section-title"/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Button text="Clear Log" onAction="#clearLog" styleClass="button-small"/>
+                            <Button fx:id="clearLogButton" text="Clear Log" onAction="#clearLog"
+                                    styleClass="button-small"/>
                         </HBox>
                         <TextArea fx:id="communicationLog" prefRowCount="16" VBox.vgrow="ALWAYS"
                                   styleClass="communication-log"/>
@@ -179,8 +185,10 @@
                 <VBox spacing="10" styleClass="panel">
                     <HBox alignment="CENTER_LEFT">
                         <VBox spacing="2">
-                            <Label text="DIAGNOSTIC TROUBLE CODES" styleClass="section-title"/>
-                            <Label text="Mode 03 stored trouble codes" styleClass="section-subtitle"/>
+                            <Label fx:id="dtcSectionTitle" text="DIAGNOSTIC TROUBLE CODES"
+                                   styleClass="section-title"/>
+                            <Label fx:id="dtcSectionSubtitle" text="Mode 03 stored trouble codes"
+                                   styleClass="section-subtitle"/>
                         </VBox>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Button fx:id="readDtcButton" text="Read DTC" onAction="#readDtc" disable="true"
