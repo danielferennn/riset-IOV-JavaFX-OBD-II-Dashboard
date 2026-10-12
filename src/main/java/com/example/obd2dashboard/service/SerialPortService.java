@@ -95,9 +95,15 @@ public final class SerialPortService implements AutoCloseable {
                 throw new ObdConnectionException("Terjadi kesalahan saat membaca port serial");
             }
             response.write(buffer, 0, read);
-            String text = response.toString(StandardCharsets.US_ASCII);
-            if (text.indexOf('>') >= 0) {
-                return text;
+            boolean promptFound = false;
+            for (int index = 0; index < read; index++) {
+                if (buffer[index] == '>') {
+                    promptFound = true;
+                    break;
+                }
+            }
+            if (promptFound) {
+                return response.toString(StandardCharsets.US_ASCII);
             }
         }
         throw new ObdConnectionException("Timeout menunggu prompt ELM327");
