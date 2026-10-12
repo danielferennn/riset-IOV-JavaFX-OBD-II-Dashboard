@@ -47,6 +47,7 @@ public final class ObdResponseParser {
     public List<String> parseDtc(String rawResponse) throws ObdParseException {
         String cleaned = validateAndClean(rawResponse, "03");
         Set<String> result = new LinkedHashSet<>();
+        boolean sawValidResponse = false;
 
         for (String line : cleaned.split("\\R")) {
             String compact = line.replaceAll("(?i)[^0-9A-F]", "").toUpperCase(Locale.ROOT);
@@ -56,6 +57,17 @@ public final class ObdResponseParser {
             }
             String payload = compact.substring(marker + 2);
             List<String> bytes = splitBytes(payload);
+            if (bytes.isEmpty()) {
+                throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
+            }
+            if (isAllZero(bytes)) {
+                sawValidResponse = true;
+                continue;
+            }
+            if (bytes.size() < 2 || bytes.size() % 2 != 0) {
+                throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
+            }
+            sawValidResponse = true;
             for (int index = 0; index + 1 < bytes.size(); index += 2) {
                 int first = HexUtils.parseByte(bytes.get(index));
                 int second = HexUtils.parseByte(bytes.get(index + 1));
@@ -66,7 +78,7 @@ public final class ObdResponseParser {
             }
         }
 
-        if (result.isEmpty() && !cleaned.toUpperCase(Locale.ROOT).contains("43")) {
+        if (!sawValidResponse) {
             throw new ObdParseException("Respons Mode 03 tidak valid: " + summarize(rawResponse));
         }
         return List.copyOf(result);
@@ -125,6 +137,15 @@ public final class ObdResponseParser {
             bytes.add(compact.substring(index, index + 2));
         }
         return bytes;
+    }
+
+    private boolean isAllZero(List<String> bytes) throws ObdParseException {
+        for (String value : bytes) {
+            if (HexUtils.parseByte(value) != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private double singleByte(ObdPid pid, List<String> bytes) throws ObdParseException {

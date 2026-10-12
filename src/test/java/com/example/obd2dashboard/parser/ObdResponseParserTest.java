@@ -87,4 +87,39 @@ class ObdResponseParserTest {
     void ignoresZeroDtcPairs() throws Exception {
         assertEquals(List.of("P0300"), parser.parseDtc("43 03 00 00 00\r>"));
     }
+
+    @Test
+    void rejectsBareMode03Marker() {
+        assertThrows(ObdParseException.class, () -> parser.parseDtc("43"));
+    }
+
+    @Test
+    void rejectsSingleNonZeroDtcByte() {
+        assertThrows(ObdParseException.class, () -> parser.parseDtc("43 FF"));
+    }
+
+    @Test
+    void rejectsNonPairedDtcPayload() {
+        assertThrows(ObdParseException.class, () -> parser.parseDtc("43 03 00 01"));
+    }
+
+    @Test
+    void rejectsOddHexNibbleInMode03Payload() {
+        assertThrows(ObdParseException.class, () -> parser.parseDtc("43 0"));
+    }
+
+    @Test
+    void acceptsZeroCountSingleByte() throws Exception {
+        assertEquals(List.of(), parser.parseDtc("43 00"));
+    }
+
+    @Test
+    void acceptsZeroCountTwoBytes() throws Exception {
+        assertEquals(List.of(), parser.parseDtc("43 00 00"));
+    }
+
+    @Test
+    void rejectsTruncatedLineEvenWithValidLinePresent() {
+        assertThrows(ObdParseException.class, () -> parser.parseDtc("43 03 00\r43"));
+    }
 }
