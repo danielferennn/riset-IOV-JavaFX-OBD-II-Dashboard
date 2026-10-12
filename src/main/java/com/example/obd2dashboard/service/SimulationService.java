@@ -4,6 +4,7 @@ import com.example.obd2dashboard.model.ConnectionStatus;
 import com.example.obd2dashboard.model.ObdPid;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,6 +16,9 @@ public final class SimulationService implements ObdService {
     private final ObdEventListener listener;
     private final ScheduledExecutorService scheduler;
     private final AtomicBoolean running = new AtomicBoolean();
+    private final Object lifecycleLock = new Object();
+    private boolean closed;
+    private CompletableFuture<Void> stopFuture;
     private ScheduledFuture<?> updateTask;
     private double phase;
     private double fuelLevel = 78.0;
@@ -29,12 +33,20 @@ public final class SimulationService implements ObdService {
     }
 
     public void start() {
-        if (!running.compareAndSet(false, true)) {
-            return;
+        synchronized (lifecycleLock) {
+            if (closed) {
+                throw new IllegalStateException("Service simulasi sudah ditutup");
+            }
+            if (stopFuture != null && !stopFuture.isDone()) {
+                throw new IllegalStateException("Simulasi sedang dihentikan");
+            }
+            if (!running.compareAndSet(false, true)) {
+                return;
+            }
+            listener.onLog("INFO", "Mode simulasi diaktifkan");
+            listener.onStatus(ConnectionStatus.SIMULATION, "Simulation");
+            updateTask = scheduler.scheduleAtFixedRate(this::generateFrame, 0, 500, TimeUnit.MILLISECONDS);
         }
-        listener.onLog("INFO", "Mode simulasi diaktifkan");
-        listener.onStatus(ConnectionStatus.SIMULATION, "Simulation");
-        updateTask = scheduler.scheduleAtFixedRate(this::generateFrame, 0, 500, TimeUnit.MILLISECONDS);
     }
 
     private void generateFrame() {
@@ -69,14 +81,36 @@ public final class SimulationService implements ObdService {
 
     @Override
     public CompletableFuture<Void> stop() {
-        if (running.getAndSet(false)) {
+        synchronized (lifecycleLock) {
+            if (closed) {
+                return CompletableFuture.completedFuture(null);
+            }
+            if (stopFuture != null && !stopFuture.isDone()) {
+                return stopFuture;
+            }
+            if (!running.get()) {
+                return CompletableFuture.completedFuture(null);
+            }
+            running.set(false);
             if (updateTask != null) {
                 updateTask.cancel(false);
             }
-            listener.onLog("INFO", "Mode simulasi dihentikan");
-            listener.onStatus(ConnectionStatus.DISCONNECTED, "Disconnected");
+            CompletableFuture<Void> barrier = new CompletableFuture<>();
+            stopFuture = barrier;
+            scheduler.execute(() -> {
+                synchronized (lifecycleLock) {
+                    if (closed) {
+                        barrier.completeExceptionally(
+                                new CancellationException("Service simulasi sudah ditutup"));
+                        return;
+                    }
+                    listener.onLog("INFO", "Mode simulasi dihentikan");
+                    listener.onStatus(ConnectionStatus.DISCONNECTED, "Disconnected");
+                }
+                barrier.complete(null);
+            });
+            return barrier;
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -91,10 +125,13 @@ public final class SimulationService implements ObdService {
 
     @Override
     public void close() {
-        running.set(false);
-        if (updateTask != null) {
-            updateTask.cancel(false);
+        synchronized (lifecycleLock) {
+            closed = true;
+            running.set(false);
+            if (updateTask != null) {
+                updateTask.cancel(false);
+            }
         }
-        scheduler.shutdownNow();
+        scheduler.shutdown();
     }
 }
