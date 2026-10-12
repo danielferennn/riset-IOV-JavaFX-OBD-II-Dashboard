@@ -3,7 +3,6 @@ package com.example.obd2dashboard.controller;
 import com.example.obd2dashboard.config.AppConfig;
 import com.example.obd2dashboard.model.ConnectionStatus;
 import com.example.obd2dashboard.model.ObdPid;
-import com.example.obd2dashboard.model.TelemetryData;
 import com.example.obd2dashboard.parser.ObdResponseParser;
 import com.example.obd2dashboard.service.Elm327Service;
 import com.example.obd2dashboard.service.ObdEventListener;
@@ -64,7 +63,6 @@ public final class DashboardController implements ObdEventListener {
     @FXML private ListView<String> dtcListView;
     @FXML private Button readDtcButton;
 
-    private final TelemetryData telemetryData = new TelemetryData();
     private final Elm327Service elm327Service;
     private final SimulationService simulationService;
     private final Deque<String> logLines = new ArrayDeque<>();
@@ -72,6 +70,8 @@ public final class DashboardController implements ObdEventListener {
     private final XYChart.Series<Number, Number> speedSeries = new XYChart.Series<>();
     private long chartStartedAt;
     private volatile boolean shuttingDown;
+    private boolean connectionBusy;
+    private boolean dtcBusy;
 
     public DashboardController() {
         elm327Service = new Elm327Service(new SerialPortService(), new ObdResponseParser(), this);
@@ -113,6 +113,9 @@ public final class DashboardController implements ObdEventListener {
 
     @FXML
     private void connect() {
+        if (shuttingDown || connectionBusy) {
+            return;
+        }
         if (elm327Service.isRunning()) {
             appendLog("WARN", "Koneksi nyata sudah aktif");
             return;
@@ -125,76 +128,171 @@ public final class DashboardController implements ObdEventListener {
             return;
         }
 
-        CompletableFuture<Void> preparation = simulationService.isRunning()
-                ? simulationService.stop()
-                : CompletableFuture.completedFuture(null);
-        simulationToggle.setSelected(false);
         setConnectionControlsBusy(true);
-        preparation.thenCompose(ignored -> elm327Service.connect(port, baudRate))
-                .whenComplete((ignored, error) -> Platform.runLater(() -> {
-                    setConnectionControlsBusy(false);
-                    updateControlState();
-                    if (error != null) {
-                        appendLog("ERROR", rootMessage(error));
-                    }
-                }));
+        simulationToggle.setSelected(false);
+        CompletableFuture<Void> preparation;
+        try {
+            preparation = simulationService.isRunning()
+                    ? simulationService.stop()
+                    : CompletableFuture.completedFuture(null);
+        } catch (RuntimeException exception) {
+            setConnectionControlsBusy(false);
+            appendLog("ERROR", rootMessage(exception));
+            return;
+        }
+        preparation.whenComplete((ignored, stopError) -> Platform.runLater(() -> {
+            if (shuttingDown) {
+                return;
+            }
+            if (stopError != null) {
+                setConnectionControlsBusy(false);
+                appendLog("ERROR", rootMessage(stopError));
+                return;
+            }
+            resetValueLabels();
+            CompletableFuture<Void> connection;
+            try {
+                connection = elm327Service.connect(port, baudRate);
+            } catch (RuntimeException exception) {
+                setConnectionControlsBusy(false);
+                appendLog("ERROR", rootMessage(exception));
+                return;
+            }
+            connection.whenComplete((ignoredConnect, connectError) -> Platform.runLater(() -> {
+                if (shuttingDown) {
+                    return;
+                }
+                setConnectionControlsBusy(false);
+                if (connectError != null) {
+                    appendLog("ERROR", rootMessage(connectError));
+                }
+            }));
+        }));
     }
 
     @FXML
     private void disconnect() {
+        if (shuttingDown || connectionBusy) {
+            return;
+        }
         ObdService activeService = activeService();
         if (activeService == null) {
             appendLog("WARN", "Tidak ada koneksi aktif");
             return;
         }
         setConnectionControlsBusy(true);
-        activeService.stop().whenComplete((ignored, error) -> Platform.runLater(() -> {
-            simulationToggle.setSelected(false);
+        CompletableFuture<Void> stopFuture;
+        try {
+            stopFuture = activeService.stop();
+        } catch (RuntimeException exception) {
             setConnectionControlsBusy(false);
-            updateControlState();
-            telemetryData.clearSensorValues();
-            resetValueLabels();
+            appendLog("ERROR", rootMessage(exception));
+            return;
+        }
+        stopFuture.whenComplete((ignored, error) -> Platform.runLater(() -> {
+            if (shuttingDown) {
+                return;
+            }
+            setConnectionControlsBusy(false);
             if (error != null) {
                 appendLog("ERROR", rootMessage(error));
+                return;
             }
+            simulationToggle.setSelected(false);
+            resetValueLabels();
         }));
     }
 
     @FXML
     private void toggleSimulation() {
+        if (shuttingDown || connectionBusy) {
+            return;
+        }
         if (simulationToggle.isSelected()) {
-            CompletableFuture<Void> preparation = elm327Service.isRunning()
-                    ? elm327Service.stop()
-                    : CompletableFuture.completedFuture(null);
+            setConnectionControlsBusy(true);
+            CompletableFuture<Void> preparation;
+            try {
+                preparation = elm327Service.isRunning()
+                        ? elm327Service.stop()
+                        : CompletableFuture.completedFuture(null);
+            } catch (RuntimeException exception) {
+                setConnectionControlsBusy(false);
+                simulationToggle.setSelected(false);
+                appendLog("ERROR", rootMessage(exception));
+                return;
+            }
             preparation.whenComplete((ignored, error) -> Platform.runLater(() -> {
+                if (shuttingDown) {
+                    return;
+                }
                 if (error != null) {
+                    setConnectionControlsBusy(false);
                     simulationToggle.setSelected(false);
                     appendLog("ERROR", rootMessage(error));
                     return;
                 }
-                telemetryData.clearSensorValues();
-                clearCharts();
-                simulationService.start();
-                updateControlState();
+                resetValueLabels();
+                try {
+                    simulationService.start();
+                } catch (RuntimeException exception) {
+                    setConnectionControlsBusy(false);
+                    simulationToggle.setSelected(false);
+                    appendLog("ERROR", rootMessage(exception));
+                    return;
+                }
+                setConnectionControlsBusy(false);
             }));
         } else if (simulationService.isRunning()) {
-            simulationService.stop();
-            telemetryData.clearSensorValues();
-            resetValueLabels();
-            updateControlState();
+            setConnectionControlsBusy(true);
+            CompletableFuture<Void> stopFuture;
+            try {
+                stopFuture = simulationService.stop();
+            } catch (RuntimeException exception) {
+                setConnectionControlsBusy(false);
+                appendLog("ERROR", rootMessage(exception));
+                return;
+            }
+            stopFuture.whenComplete((ignored, error) -> Platform.runLater(() -> {
+                if (shuttingDown) {
+                    return;
+                }
+                setConnectionControlsBusy(false);
+                if (error != null) {
+                    appendLog("ERROR", rootMessage(error));
+                    return;
+                }
+                resetValueLabels();
+            }));
         }
     }
 
     @FXML
     private void readDtc() {
+        if (shuttingDown || connectionBusy || dtcBusy) {
+            return;
+        }
         ObdService activeService = activeService();
         if (activeService == null) {
             appendLog("WARN", "Aktifkan koneksi atau simulasi sebelum membaca DTC");
             return;
         }
-        readDtcButton.setDisable(true);
-        activeService.readDtc().whenComplete((dtcs, error) -> Platform.runLater(() -> {
-            readDtcButton.setDisable(false);
+        dtcBusy = true;
+        updateControlState();
+        CompletableFuture<List<String>> future;
+        try {
+            future = activeService.readDtc();
+        } catch (RuntimeException exception) {
+            dtcBusy = false;
+            updateControlState();
+            appendLog("ERROR", "Gagal membaca DTC: " + rootMessage(exception));
+            return;
+        }
+        future.whenComplete((dtcs, error) -> Platform.runLater(() -> {
+            if (shuttingDown) {
+                return;
+            }
+            dtcBusy = false;
+            updateControlState();
             if (error != null) {
                 appendLog("ERROR", "Gagal membaca DTC: " + rootMessage(error));
                 return;
@@ -218,53 +316,48 @@ public final class DashboardController implements ObdEventListener {
         if (shuttingDown) {
             return;
         }
-        Platform.runLater(() -> applyTelemetry(pid, value));
+        Platform.runLater(() -> {
+            if (shuttingDown) {
+                return;
+            }
+            applyTelemetry(pid, value);
+        });
     }
 
     private void applyTelemetry(ObdPid pid, double value) {
         LocalDateTime now = LocalDateTime.now();
-        telemetryData.setLastUpdated(now);
         lastUpdatedLabel.setText("Updated " + UPDATE_TIME.format(now));
 
         switch (pid) {
             case ENGINE_RPM -> {
-                telemetryData.setRpm(value);
                 rpmValueLabel.setText(format(value, 0));
                 rpmProgressBar.setProgress(clamp01(value / 6000.0));
                 addChartPoint(rpmSeries, value);
             }
             case VEHICLE_SPEED -> {
-                telemetryData.setSpeedKmh(value);
                 speedValueLabel.setText(format(value, 0));
                 speedProgressBar.setProgress(clamp01(value / 200.0));
                 addChartPoint(speedSeries, value);
             }
             case COOLANT_TEMPERATURE -> {
-                telemetryData.setCoolantTemperatureC(value);
                 coolantValueLabel.setText(format(value, 0));
             }
             case ENGINE_LOAD -> {
-                telemetryData.setEngineLoadPercent(value);
                 engineLoadValueLabel.setText(format(value, 1));
             }
             case THROTTLE_POSITION -> {
-                telemetryData.setThrottlePositionPercent(value);
                 throttleValueLabel.setText(format(value, 1));
             }
             case INTAKE_AIR_TEMPERATURE -> {
-                telemetryData.setIntakeAirTemperatureC(value);
                 intakeAirValueLabel.setText(format(value, 0));
             }
             case FUEL_LEVEL -> {
-                telemetryData.setFuelLevelPercent(value);
                 fuelValueLabel.setText(format(value, 1));
             }
             case MANIFOLD_PRESSURE -> {
-                telemetryData.setManifoldPressureKpa(value);
                 manifoldValueLabel.setText(format(value, 0));
             }
             case VOLTAGE -> {
-                telemetryData.setVoltage(value);
                 voltageValueLabel.setText(format(value, 2));
             }
         }
@@ -282,6 +375,9 @@ public final class DashboardController implements ObdEventListener {
     public void onStatus(ConnectionStatus status, String message) {
         if (!shuttingDown) {
             Platform.runLater(() -> {
+                if (shuttingDown) {
+                    return;
+                }
                 setStatus(status, message);
                 updateControlState();
             });
@@ -291,12 +387,16 @@ public final class DashboardController implements ObdEventListener {
     @Override
     public void onLog(String level, String message) {
         if (!shuttingDown) {
-            Platform.runLater(() -> appendLog(level, message));
+            Platform.runLater(() -> {
+                if (shuttingDown) {
+                    return;
+                }
+                appendLog(level, message);
+            });
         }
     }
 
     private void setStatus(ConnectionStatus status, String message) {
-        telemetryData.setConnectionStatus(status);
         statusLabel.setText(message);
         statusPill.getStyleClass().removeAll(
                 "status-disconnected", "status-connecting", "status-connected",
@@ -322,25 +422,24 @@ public final class DashboardController implements ObdEventListener {
     }
 
     private void setConnectionControlsBusy(boolean busy) {
-        connectButton.setDisable(busy);
-        disconnectButton.setDisable(busy);
-        refreshPortsButton.setDisable(busy);
-        portComboBox.setDisable(busy);
-        baudRateComboBox.setDisable(busy);
-        simulationToggle.setDisable(busy);
+        connectionBusy = busy;
+        updateControlState();
     }
 
     private void updateControlState() {
         boolean real = elm327Service.isRunning();
         boolean simulation = simulationService.isRunning();
         boolean active = real || simulation;
-        portComboBox.setDisable(active);
-        baudRateComboBox.setDisable(active);
-        refreshPortsButton.setDisable(active);
-        connectButton.setDisable(active);
-        disconnectButton.setDisable(!active);
-        readDtcButton.setDisable(!active);
-        simulationToggle.setSelected(simulation);
+        portComboBox.setDisable(connectionBusy || active);
+        baudRateComboBox.setDisable(connectionBusy || active);
+        refreshPortsButton.setDisable(connectionBusy || active);
+        connectButton.setDisable(connectionBusy || active);
+        disconnectButton.setDisable(connectionBusy || !active);
+        simulationToggle.setDisable(connectionBusy);
+        readDtcButton.setDisable(connectionBusy || dtcBusy || !active);
+        if (!connectionBusy) {
+            simulationToggle.setSelected(simulation);
+        }
     }
 
     private ObdService activeService() {
