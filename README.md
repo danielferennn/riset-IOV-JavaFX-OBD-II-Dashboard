@@ -12,7 +12,9 @@ Project ini juga memiliki **mode simulasi**, sehingga tampilan dashboard dan alu
 - Pembacaan telemetry OBD-II secara berkala.
 - Mode simulasi untuk testing tanpa perangkat.
 - Dashboard JavaFX dengan telemetry card, progress bar, chart, log komunikasi, dan daftar Diagnostic Trouble Codes (DTC).
-- Unit test untuk parser respons OBD-II (termasuk Mode 03) dan lifecycle `SimulationService`.
+- Pemilihan bahasa di dalam aplikasi (language selector) dengan pilihan **Indonesia** dan **English**.
+- **Bahasa Indonesia** dipakai sebagai default saat aplikasi pertama kali dijalankan, dan pilihan bahasa disimpan untuk peluncuran berikutnya.
+- Unit test untuk parser respons OBD-II (termasuk Mode 03), presentasi DTC, localization, dan lifecycle `SimulationService`.
 
 ## Data yang Ditampilkan
 
@@ -53,14 +55,21 @@ Project ini juga memiliki **mode simulasi**, sehingga tampilan dashboard dan alu
     |   |   |-- service
     |   |   `-- util
     |   `-- resources
+    |       |-- com/example/obd2dashboard/i18n
+    |       |   |-- messages_en.properties
+    |       |   `-- messages_id.properties
     |       |-- css/dashboard.css
     |       `-- view/dashboard.fxml
     `-- test
         `-- java/com/example/obd2dashboard
+            |-- controller
+            |   `-- DtcPresentationTest.java
             |-- parser
             |   `-- ObdResponseParserTest.java
-            `-- service
-                `-- SimulationServiceTest.java
+            |-- service
+            |   `-- SimulationServiceTest.java
+            `-- util
+                `-- LocalizationTest.java
 ```
 
 ## Requirement
@@ -106,6 +115,15 @@ Output build akan dibuat di folder `target/`.
 
 ## Cara Menggunakan
 
+### Bahasa Aplikasi
+
+1. Saat aplikasi pertama kali dijalankan, bahasa antarmuka default adalah **Bahasa Indonesia**.
+2. Gunakan pemilih bahasa (language selector) di dalam aplikasi untuk mengganti bahasa.
+3. Pilihan bahasa yang tersedia adalah **Indonesia** dan **English**.
+4. Pilihan bahasa akan disimpan dan tetap digunakan pada peluncuran aplikasi berikutnya.
+
+Label tombol dan teks antarmuka mengikuti bahasa yang sedang dipilih. Nama tombol yang disebutkan pada langkah-langkah di bawah ini ditulis dalam bahasa Inggris sesuai label aslinya; saat bahasa Indonesia aktif, tombol tersebut tampil dengan label Indonesia yang setara.
+
 ### Mode Simulasi
 
 1. Jalankan aplikasi.
@@ -148,6 +166,8 @@ Aplikasi ini dibuat untuk monitoring dan pembelajaran. Hasil pembacaan tidak dit
 
 Jangan mengoperasikan aplikasi saat sedang mengemudi.
 
+Aplikasi mengingat pilihan bahasa yang terakhir dipakai, sehingga peluncuran berikutnya kembali menggunakan bahasa yang sama dengan sesi sebelumnya.
+
 ### Pembacaan DTC (Mode 03)
 
 Respons Mode 03 divalidasi secara struktural, bukan hanya dengan mencari marker `43`:
@@ -156,6 +176,8 @@ Respons Mode 03 divalidasi secara struktural, bukan hanya dengan mencari marker 
 - Payload yang seluruh byte-nya nol (misalnya `43 00` atau `43 00 00`) adalah **respons kosong yang valid** dan ditampilkan sebagai `Tidak ada DTC`.
 - Payload dengan byte bukan nol harus terdiri atas pasangan byte lengkap (jumlah byte genap). Byte tunggal bukan nol atau sisa byte yang tidak berpasangan membuat respons **tidak valid**.
 - Jika ada satu baris bermarker `43` yang terpotong, seluruh respons dianggap gagal — tidak ada hasil parsial yang ditampilkan sebagai sukses.
+
+Saat pengguna memulai pembacaan DTC baru, hasil pembacaan sebelumnya langsung dibersihkan. Jika pembacaan gagal, pesan error beserta detailnya ditampilkan pada communication log.
 
 ### Transisi Koneksi dan Simulasi
 
