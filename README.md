@@ -217,7 +217,3 @@ Each telemetry producer (ELM327 or simulation) uses a single worker thread. For 
 This application is built for monitoring and learning. Its readings are not intended as a substitute for professional diagnostic tools.
 
 Do not operate the application while driving.
-
-## License
-
-This repository does not contain a `LICENSE` file, so no reuse or redistribution license is specified. Absence of a license does not grant reuse rights. Contact the maintainer before redistributing this code or building on it.
